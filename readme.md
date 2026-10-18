@@ -1,59 +1,208 @@
 # Smart Document Assistant
 
-An AI-powered document question-answering application built using **Retrieval-Augmented Generation (RAG)**. Upload PDF or TXT documents, ask questions in natural language, and receive answers grounded in retrieved document content.
+**An AI-powered document intelligence application built with Retrieval-Augmented Generation (RAG).**
 
-## Features
+Smart Document Assistant enables users to upload documents, ask questions in natural language, and retrieve answers grounded in the content of those documents.
 
-- Upload PDF and TXT documents
-- Support multiple documents
-- Automatic text extraction and chunking
-- Semantic embeddings using Sentence Transformers
-- FAISS-based vector similarity search
-- Retrieval-Augmented Generation (RAG)
-- Natural-language question answering
-- Source and evidence information for retrieved content
-- Unknown-answer handling for questions lacking sufficient evidence
-- Evidence/retrieval-strength indicator
+The project explores how document processing, semantic search, vector databases, and large language models can work together to make information more accessible and easier to verify.
 
-> **Note:** The evidence indicator represents retrieval strength, not a calibrated probability that an answer is correct.
+## Overview
+
+Searching through lengthy documents manually can be time-consuming. Traditional keyword searches may also miss relevant information when the wording of a query differs from the wording in the document.
+
+Smart Document Assistant addresses this problem by combining semantic retrieval with language model generation. Instead of relying solely on an LLM's general knowledge, the application retrieves relevant document passages and uses them as context for answering questions.
+
+## Key Features
+
+- **Document Ingestion:** Upload PDF and TXT documents.
+- **Multi-Document Question Answering:** Ask questions across uploaded documents.
+- **Semantic Search:** Retrieve relevant passages using text embeddings.
+- **Vector Similarity Search:** Use FAISS to search document embeddings.
+- **Context-Grounded Responses:** Generate answers using retrieved document content.
+- **Source Evidence:** Display available supporting document information.
+- **Unknown-Answer Handling:** Handle questions when sufficient supporting information cannot be found.
+- **Evidence Strength Indicator:** Provide an additional signal about the strength of retrieved evidence.
+
+> The evidence strength indicator reflects retrieval or evidence strength. It should not be interpreted as a calibrated probability that an answer is correct.
 
 ## Architecture
 
 ```mermaid
 flowchart TD
-    A[Upload PDF / TXT] --> B[Extract Text]
-    B --> C[Split into Chunks]
-    C --> D[Generate Embeddings]
+    A[PDF / TXT Documents] --> B[Text Extraction]
+    B --> C[Text Chunking]
+    C --> D[Embedding Generation]
     D --> E[FAISS Vector Store]
 
-    F[User Question] --> G[Retrieve Relevant Chunks]
+    F[User Question] --> G[Retriever]
     E --> G
-    G --> H[Build Prompt with Context]
-    H --> I[Language Model]
-    I --> J[Grounded Answer]
-    G --> K[Source Evidence]
-    J --> L[Display Response]
-    K --> L
+
+    G --> H[Relevant Document Chunks]
+    H --> I[Context Construction]
+    F --> I
+
+    I --> J[Large Language Model]
+    J --> K[Generated Answer]
+
+    H --> L[Source Evidence]
+    K --> M[Streamlit Interface]
+    L --> M
 ```
 
 ## Technology Stack
 
-| Technology | Purpose |
+| Technology | Role |
 |---|---|
 | Python | Core application logic |
-| Streamlit | User interface |
-| LangChain | RAG pipeline and LLM integration |
+| Streamlit | Interactive user interface |
+| LangChain | LLM integration and RAG components |
 | Hugging Face | Language model inference |
-| Sentence Transformers | Text embedding generation |
+| Sentence Transformers | Semantic embedding generation |
 | FAISS | Vector similarity search |
 | PyPDF | PDF text extraction |
 | NumPy | Numerical processing |
 | python-dotenv | Environment configuration |
 
-## Project Structure
+## How It Works
+
+### 1. Document Processing
+
+Users upload PDF or TXT files. The application extracts the available text and divides it into smaller chunks suitable for retrieval.
+
+### 2. Embedding Generation
+
+Each text chunk is converted into a numerical vector representation using a sentence embedding model. These embeddings capture semantic information that supports similarity-based search.
+
+### 3. Vector Indexing
+
+The generated embeddings are stored in a FAISS index, enabling the application to retrieve document passages that are semantically relevant to a user's question.
+
+### 4. Context Retrieval
+
+When a question is submitted, the retriever searches the vector index and selects relevant passages from the uploaded documents.
+
+### 5. Answer Generation
+
+The retrieved passages and the user's question are passed to the configured language model. The model generates a response using the available document context.
+
+### 6. Evidence Presentation
+
+The application displays the generated answer alongside available source or evidence information to help users inspect the supporting content.
+
+## Getting Started
+
+### Prerequisites
+
+- Python 3.9 or later
+- pip
+- A Hugging Face API token compatible with the configured inference service
+
+### Installation
+
+**1. Clone the repository**
+
+```bash
+git clone https://github.com/Dhanush7753/Smart-Document-assistant.git
+cd Smart-Document-assistant
+```
+
+**2. Create a virtual environment**
+
+```bash
+python -m venv venv
+```
+
+Activate it on Windows:
+
+```powershell
+.\venv\Scripts\Activate.ps1
+```
+
+On macOS or Linux:
+
+```bash
+source venv/bin/activate
+```
+
+**3. Install dependencies**
+
+The current repository uses `requirement.txt`.
+
+```bash
+pip install -r requirement.txt
+```
+
+**4. Configure environment variables**
+
+Create a `.env` file in the project root:
+
+```env
+HUGGINGFACEHUB_API_TOKEN=your_huggingface_token
+```
+
+Use your own token and keep it private. Never commit credentials to version control.
+
+**5. Launch the application**
+
+```bash
+streamlit run app.py
+```
+
+Open the local URL displayed in your terminal, typically:
+
+`http://localhost:8501`
+
+## Usage
+
+1. Start the application.
+2. Upload one or more PDF or TXT documents.
+3. Allow the application to process the uploaded content.
+4. Enter a question related to the documents.
+5. Review the generated answer and available supporting evidence.
+6. Test questions whose answers are absent from the uploaded documents.
+
+## Design Considerations
+
+### Grounding Answers in Retrieved Context
+
+Retrieval-Augmented Generation provides the language model with relevant passages from the document collection before answer generation. This can reduce reliance on unsupported general knowledge, although it does not guarantee correctness.
+
+### Separating Retrieval from Generation
+
+The retrieval stage determines which document passages are relevant, while the generation stage uses those passages to formulate an answer. Keeping these stages conceptually separate makes it easier to investigate retrieval failures and answer-generation errors.
+
+### Evidence Strength versus Answer Correctness
+
+A strong retrieval result does not necessarily mean that the generated answer is correct. Retrieval quality, context completeness, source relevance, and model behavior must be evaluated independently.
+
+## Current Limitations
+
+- Supported document formats are PDF and TXT.
+- Complex layouts and tables may not be extracted reliably.
+- Retrieval quality depends on document structure, chunking, and embedding quality.
+- Language model inference depends on the configured external service.
+- The evidence strength indicator is not a calibrated confidence score.
+- The current architecture is designed as a lightweight application rather than a fully production-hardened system.
+- Retrieval and answer quality require more systematic evaluation.
+
+## Potential Improvements
+
+The following are opportunities for future development, not claims about existing functionality.
+
+- **Advanced Retrieval:** Experiment with hybrid keyword and semantic search.
+- **Reranking:** Reorder retrieved passages using a dedicated reranking model.
+- **RAG Evaluation:** Build a test dataset and measure retrieval relevance, answer faithfulness, and citation accuracy.
+- **Improved Citations:** Trace generated claims to precise source passages and page numbers.
+- **Persistent Collections:** Preserve document indexes across application sessions.
+- **Document Intelligence:** Explore document summarization and comparison.
+- **Broader Format Support:** Add DOCX, CSV, and Excel processing.
+- **Conversation Context:** Support reliable follow-up questions across multiple turns.
+- **Production Readiness:** Add authentication, access controls, automated tests, logging, and deployment workflows.
+
+## Repository Structure
 
 ```text
-smart-document-assistant/
+Smart-Document-assistant/
 ├── app.py
 ├── config/
 │   └── settings.py
@@ -71,158 +220,34 @@ smart-document-assistant/
 ├── test_chatbot.py
 ├── upload_docs.py
 ├── .gitignore
-└── README.md
+└── readme.md
 ```
 
-## Installation and Setup
+## Security Considerations
 
-### Prerequisites
+- Store API credentials outside source code.
+- Exclude `.env` files, local environments, caches, and unnecessary generated artifacts from version control.
+- Do not publish confidential documents or personal information.
+- Treat uploaded documents as untrusted input.
+- Review access controls and document isolation before deploying the application for multiple users.
 
-- Python 3.9 or later
-- pip
-- Hugging Face API access for the configured inference service
+## Project Focus
 
-### 1. Clone the Repository
-
-Replace the placeholder with your actual GitHub repository URL.
-
-```bash
-git clone <your-repository-url>
-cd smart-document-assistant
-```
-
-### 2. Create a Virtual Environment
-
-```bash
-python -m venv venv
-```
-
-Activate the environment on Windows PowerShell:
-
-```powershell
-.\venv\Scripts\Activate.ps1
-```
-
-### 3. Install Dependencies
-
-```bash
-pip install -r requirement.txt
-```
-
-### 4. Configure Environment Variables
-
-Create a `.env` file in the project root:
-
-```env
-HUGGINGFACEHUB_API_TOKEN=your_huggingface_token
-```
-
-Replace the placeholder with your own token. Keep your API credentials private and never commit them to GitHub.
-
-### 5. Run the Application
-
-```bash
-streamlit run app.py
-```
-
-Open the local URL displayed in your terminal, typically:
-
-`http://localhost:8501`
-
-## How to Use
-
-1. Launch the Streamlit application.
-2. Upload one or more PDF or TXT documents.
-3. Allow the application to process the documents.
-4. Ask a question about the uploaded content.
-5. Review the generated answer and available source information.
-6. Try an unanswerable question to examine the application's unknown-answer handling.
-
-## How It Works
-
-The application follows a Retrieval-Augmented Generation workflow:
-
-1. **Document ingestion:** Read uploaded PDF and TXT files.
-2. **Text extraction:** Extract textual content from documents.
-3. **Chunking:** Split the extracted text into smaller passages.
-4. **Embedding generation:** Convert passages into vector representations.
-5. **Vector storage:** Store the embeddings in FAISS.
-6. **Retrieval:** Search for passages relevant to the user's question.
-7. **Generation:** Supply the retrieved context and question to the language model.
-8. **Evidence display:** Present the answer with available supporting source information.
-
-## Hallucination Reduction
-
-The application aims to reduce unsupported answers by retrieving relevant document passages before generating a response.
-
-Its approach includes:
-
-- Retrieving relevant document chunks
-- Providing retrieved context to the language model
-- Encouraging answers grounded in the supplied context
-- Displaying available source information
-- Handling questions when sufficient evidence cannot be found
-
-RAG does not eliminate hallucinations entirely. Retrieval errors, incomplete documents, and incorrect model-generated answers remain possible.
-
-## Testing
-
-The project documentation describes testing with:
-
-- Questions whose answers appear in uploaded documents
-- Questions whose answers are absent from uploaded documents
-- Multiple uploaded documents
-
-A comprehensive evaluation should additionally measure retrieval quality, citation correctness, answer faithfulness, and performance on a fixed test set.
-
-## Current Limitations
-
-- PDF and TXT are the supported document formats.
-- Complex PDF layouts and tables may not be extracted accurately.
-- Answer quality depends on document quality and retrieval relevance.
-- Large document collections may require optimization.
-- The evidence indicator is not a calibrated measure of answer correctness.
-- Language model inference depends on the configured external service.
-- The current FAISS-based approach is intended for a lightweight application rather than large-scale production deployment.
-
-## Future Improvements
-
-Potential improvements include:
-
-- Hybrid keyword and semantic retrieval
-- Reranking retrieved passages
-- Improved chunking strategies
-- Automated RAG evaluation
-- More reliable source citations
-- Persistent document collections
-- Document summarization and comparison
-- DOCX, CSV, and Excel support
-- Conversation memory across sessions
-- Authentication and access controls
-- Automated testing and production deployment
-
-## Security
-
-- Store API credentials in environment variables.
-- Exclude `.env` files, virtual environments, cache files, logs, and unnecessary generated files from version control.
-- Never commit passwords, tokens, or other secrets.
-- Review document handling and access controls before deploying the application for multiple users.
-
-## Learning Objectives
-
-This project provides practical experience with:
+This project explores practical implementation of:
 
 - Generative AI and Retrieval-Augmented Generation
-- Text embeddings and vector similarity search
-- Document processing and chunking
-- LLM integration and prompt construction
-- Context-grounded question answering
-- Evidence-based evaluation and hallucination reduction
+- Semantic embeddings and vector search
+- Document processing and retrieval pipelines
+- LLM integration and context construction
+- Evidence-grounded question answering
+- Hallucination reduction and evaluation challenges
 
 ## License
 
-No license is specified here. Add an appropriate open-source license if you intend to permit others to reuse, modify, or distribute this project.
+No license is currently specified. A suitable license can be added if the project is intended for public reuse and distribution.
 
 ---
 
-**Smart Document Assistant** — exploring document intelligence through Retrieval-Augmented Generation.
+**Author:** [Dhanush BM](https://github.com/Dhanush7753)
+
+**Repository:** [Smart Document Assistant](https://github.com/Dhanush7753/Smart-Document-assistant)
