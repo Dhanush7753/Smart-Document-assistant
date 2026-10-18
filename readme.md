@@ -242,12 +242,5 @@ This project explores practical implementation of:
 - Evidence-grounded question answering
 - Hallucination reduction and evaluation challenges
 
-## License
-
-No license is currently specified. A suitable license can be added if the project is intended for public reuse and distribution.
-
----
-
-**Author:** [Dhanush BM](https://github.com/Dhanush7753)
 
 **Repository:** [Smart Document Assistant](https://github.com/Dhanush7753/Smart-Document-assistant)
